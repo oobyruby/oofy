@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "755699099286",
+    "project_id": "oofy-app",
+    "storage_bucket": "oofy-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:755699099286:android:8f8880dc4d883a5a7a44b7",
+        "android_client_info": {
+          "package_name": "dev.oobyruby.oofy_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "755699099286-tcu1l15a0giaom5c4qth2pu60jdjdcl7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.oobyruby.oofy_app",
+            "certificate_hash": "1d7eb2d72596e06a37bf01c28339bf88dfaa77b5"
+          }
+        },
+        {
+          "client_id": "755699099286-8b54umvmu6q3dhc45pene8j5jechdkbj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhTgepgv6iKp-NigExI3W910s8rVpJxqM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "755699099286-8b54umvmu6q3dhc45pene8j5jechdkbj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "755699099286-6q2f8q15j09n00gro243rpv046ikjelj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "dev.oobyruby.oofyApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
