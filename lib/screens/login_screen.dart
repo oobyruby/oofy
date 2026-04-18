@@ -73,25 +73,15 @@ class _LoginScreenState extends State<LoginScreen> {
       // common login errors
       switch (e.code) {
         case 'invalid-email':
-          message = 'Email is incorrect';
+          message = 'email is incorrect';
           break;
         case 'wrong-password':
-          message = 'Password is incorrect';
-          break;
         case 'user-not-found':
-          message = 'Email is incorrect';
-          break;
         case 'invalid-credential':
-          message = 'Email is incorrect';
-          break;
-        case 'user-disabled':
-          message = 'This account has been disabled.';
-          break;
-        case 'too-many-requests':
-          message = 'Too many attempts. Please try again later.';
+          message = 'invalid email or password';
           break;
         default:
-          message = e.message ?? 'Log in failed';
+          message = 'log in failed';
       }
 
       if (!mounted) return;
@@ -104,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Something went wrong: $e')),
+        const SnackBar(content: Text('something went wrong')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
