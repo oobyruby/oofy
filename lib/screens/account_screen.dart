@@ -37,7 +37,7 @@ class _AccountScreenState extends State<AccountScreen> {
   String get _displayUsername => _username.trim().isEmpty ? '-' : _username;
   String get _displayEmail => _email.trim().isEmpty ? '-' : _email;
 
-  Future<void> _goToLogin() async {
+  void _goToLogin() {
     if (!mounted) return;
 
     // go back to login and clear old screens
@@ -63,7 +63,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ),
         ),
-        width: 220,
+        width: 260,
         backgroundColor: const Color(0xFF3B3B3B),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -79,7 +79,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
     // send back if no user is signed in
     if (user == null) {
-      await _goToLogin();
+      _goToLogin();
       return;
     }
 
@@ -111,30 +111,35 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _showDeleteAccountDialog() async {
-    // show delete confirmation
-    await showDialog<void>(
+    // wait for dialog to close first
+    final shouldDelete = await showDialog<bool>(
       context: context,
       barrierDismissible: !_deleting,
       builder: (dialogContext) {
         return _DeleteAccountDialog(
           deleting: _deleting,
-          onConfirm: () async {
-            Navigator.of(dialogContext).pop();
-            await _deleteAccount();
+          onConfirm: () {
+            Navigator.of(dialogContext).pop(true);
           },
           onCancel: () {
-            Navigator.of(dialogContext).pop();
+            Navigator.of(dialogContext).pop(false);
           },
         );
       },
     );
+
+    if (shouldDelete == true) {
+      await _deleteAccount();
+    }
   }
 
   Future<void> _deleteAccount() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    setState(() => _deleting = true);
+    if (mounted) {
+      setState(() => _deleting = true);
+    }
 
     try {
       final firestore = FirebaseFirestore.instance;
@@ -156,7 +161,7 @@ class _AccountScreenState extends State<AccountScreen> {
       // delete user doc
       batch.delete(firestore.collection('users').doc(uid));
 
-      // save all deletes
+      // save firestore deletes first
       await batch.commit();
 
       // delete auth account
@@ -165,14 +170,14 @@ class _AccountScreenState extends State<AccountScreen> {
       if (!mounted) return;
 
       // send user back to login
-      await _goToLogin();
+      _goToLogin();
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
 
       // firebase may ask for a recent login first
-      var message = 'Failed to delete account.';
+      var message = 'Failed to delete account';
       if (e.code == 'requires-recent-login') {
-        message = 'Log out and back in before deleting your account.';
+        message = 'Log out and back in before deleting your account';
       }
 
       _showPillSnackbar(message);
@@ -200,7 +205,6 @@ class _AccountScreenState extends State<AccountScreen> {
       backgroundColor: bg,
       body: SafeArea(
         child: _loading
-        // loading spinner
             ? const Center(
           child: CircularProgressIndicator(color: Colors.white),
         )
@@ -267,6 +271,239 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// title pill
+class _ScreenTitlePill extends StatelessWidget {
+  final String title;
+
+  const _ScreenTitlePill({
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2F2F2F),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+// profile image placeholder
+class _ProfilePicturePlaceholder extends StatelessWidget {
+  const _ProfilePicturePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 104,
+      height: 104,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2F2F2F),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white10,
+          width: 1,
+        ),
+      ),
+      child: const Icon(
+        Icons.person_rounded,
+        color: Colors.white70,
+        size: 52,
+      ),
+    );
+  }
+}
+
+// account info row
+class _AccountRow extends StatelessWidget {
+  final String label;
+  final VoidCallback onEdit;
+
+  const _AccountRow({
+    required this.label,
+    required this.onEdit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 58,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2F2F2F),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            onPressed: onEdit,
+            splashRadius: 22,
+            icon: const Icon(
+              Icons.edit_rounded,
+              color: Colors.white70,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
+    );
+  }
+}
+
+// delete button
+class _DeleteAccountButton extends StatelessWidget {
+  final bool deleting;
+  final Color backgroundColor;
+  final VoidCallback? onTap;
+
+  const _DeleteAccountButton({
+    required this.deleting,
+    required this.backgroundColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: Material(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: deleting
+                ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.4,
+                color: Colors.white,
+              ),
+            )
+                : const Text(
+              'Delete Account',
+              style: TextStyle(
+                color: Color(0xFFFF6B6B),
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// delete dialog
+class _DeleteAccountDialog extends StatelessWidget {
+  final bool deleting;
+  final VoidCallback onConfirm;
+  final VoidCallback onCancel;
+
+  const _DeleteAccountDialog({
+    required this.deleting,
+    required this.onConfirm,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF2B2B2B),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+      ),
+      title: const Text(
+        'Delete account?',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      content: const Text(
+        'This will permanently remove your account and reviews.',
+        style: TextStyle(
+          color: Colors.white70,
+          height: 1.4,
+        ),
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: OutlinedButton(
+                  onPressed: deleting ? null : onCancel,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white24),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: deleting ? null : onConfirm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB3261E),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

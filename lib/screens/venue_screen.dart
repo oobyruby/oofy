@@ -56,49 +56,59 @@ class VenueScreen extends StatelessWidget {
     return value.toStringAsFixed(1);
   }
 
-  // collect tags from the different formats saved in firestore
+  // collect tags from firestore
   List<String> _extractDietTags(Map<String, dynamic> data) {
     final tags = <String>[];
 
     final dietTags = data['dietTags'];
-    final tagList = data['tagList'];
     final tagsMap = data['tags'];
 
     if (dietTags is List) {
       tags.addAll(
         dietTags
             .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty),
-      );
-    }
-
-    if (tagList is List) {
-      tags.addAll(
-        tagList
-            .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty),
+            .where((e) => e.isNotEmpty)
+            .map((e) => _normaliseDietTag(e)),
       );
     }
 
     if (tagsMap is Map) {
       // this handles true or false style tag maps like glutenFree: true
-      tagsMap.forEach((key, value) {
-        if (value == true) {
-          final formatted = key
-              .toString()
-              .replaceAllMapped(RegExp(r'([A-Z])'), (m) => ' ${m.group(1)}')
-              .trim();
-          if (formatted.isNotEmpty) {
-            tags.add(
-              formatted[0].toUpperCase() + formatted.substring(1),
-            );
-          }
-        }
-      });
+      if (tagsMap['glutenFree'] == true) tags.add('Gluten Free');
+      if (tagsMap['dairyFree'] == true) tags.add('Dairy Free');
+      if (tagsMap['vegetarian'] == true) tags.add('Vegetarian');
+      if (tagsMap['vegan'] == true) tags.add('Vegan');
     }
 
     // remove duplicates before showing them on screen
     return tags.toSet().toList();
+  }
+
+  // keep tag text consistent
+  String _normaliseDietTag(String tag) {
+    final value = tag.trim().toLowerCase();
+
+    switch (value) {
+      case 'gluten free':
+      case 'glutenfree':
+        return 'Gluten Free';
+      case 'dairy free':
+      case 'dairyfree':
+        return 'Dairy Free';
+      case 'vegetarian':
+        return 'Vegetarian';
+      case 'vegan':
+        return 'Vegan';
+      default:
+        if (value.isEmpty) return '';
+        return value
+            .split(' ')
+            .where((word) => word.isNotEmpty)
+            .map(
+              (word) => word[0].toUpperCase() + word.substring(1),
+        )
+            .join(' ');
+    }
   }
 
   // get important notes from whichever field exists
@@ -441,6 +451,7 @@ class VenueScreen extends StatelessWidget {
                               spacing: 8,
                               runSpacing: 8,
                               children: dietTags
+                                  .where((tag) => tag.trim().isNotEmpty)
                                   .map((tag) => VenueTagChip(text: tag))
                                   .toList(),
                             ),
